@@ -1,17 +1,17 @@
-DROP SCHEMA IF EXISTS lbl CASCADE;
+DROP SCHEMA IF EXISTS company CASCADE;
 
-CREATE SCHEMA lbl;
+CREATE SCHEMA company;
 
-CREATE TABLE lbl.tbl_labels
+CREATE TABLE company.user
 (
     id  varchar primary key,
-    labelcode  varchar NOT NULL,
-    short_name varchar
+    user_name  varchar NOT NULL
 );
 
-CREATE TABLE lbl.tbl_labels_bookmark
+CREATE TABLE company.user_bookmark
 (
     collection varchar primary key,
-    token  varchar NOT NULL
+    token  varchar NOT NULL,
+    token_time_stamp numeric
 );
 
