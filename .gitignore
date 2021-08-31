@@ -33,3 +33,7 @@ build/
 .vscode/
 
 .DS_Store
+
+/data/mongo
+/data/postgres
+!/data/.keepme

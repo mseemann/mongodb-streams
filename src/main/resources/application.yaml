@@ -1,0 +1,44 @@
+
+
+spring:
+  application:
+    name:                                               mongo-streams
+
+  datasource:
+    driver-class-name:                                  org.postgresql.Driver
+    url:                                                jdbc:postgresql://localhost:5432/streams
+    username:                                           unicorn_user
+    password:                                           password
+    hikari:
+      maximum-pool-size:                                4
+      minimum-idle:                                     2
+
+  data:
+    mongodb:
+      host:                                             localhost
+      port:                                             27017
+      database:                                         streams
+
+  jpa:
+    properties.hibernate:
+      dialect:                                          org.hibernate.dialect.PostgreSQL10Dialect
+      temp.use_jdbc_metadata_defaults:                  false
+      hibernate.ddl-auto:                               none
+      hibernate.show-sql:                               false
+    database:                                           postgresql
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:                                        "*"
+  endpoint:
+    prometheus:
+      enabled:                                          true
+    health:
+      show-details:                                     always
+    shutdown:
+      enabled:                                          true
+  health:
+    livenessState.enabled:                              true
+    readinessState.enabled:                             true

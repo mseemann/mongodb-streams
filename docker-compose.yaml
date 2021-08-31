@@ -1,0 +1,60 @@
+version: '3.7'
+services:
+  mongo1:
+    hostname: mongo1
+    container_name: localmongo1
+    image: mongo:4
+    ports:
+      - "27017:27017"
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+    volumes:
+      - ./data/mongo/db1:/data/db
+  mongo2:
+    hostname: mongo2
+    container_name: localmongo2
+    image: mongo:4
+    expose:
+      - 27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+    volumes:
+      - ./data/mongo/db2:/data/db
+  mongo3:
+    hostname: mongo3
+    container_name: localmongo3
+    image: mongo:4
+    expose:
+      - 27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+    volumes:
+      - ./data/mongo/db3:/data/db
+  mongosetup:
+    image: mongo:4
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+    volumes:
+      - ./config/mongo/scripts:/scripts
+    restart: "no"
+    entrypoint: [ "bash", "/scripts/mongo_setup.sh"]
+  database:
+    image: postgres:13
+    ports:
+      - "5432:5432"
+    env_file:
+      - ./config/postgres/db.env
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data/
+      - ./config/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+  prometheus:
+    image: prom/prometheus:v2.29.2
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
