@@ -41,18 +41,18 @@ public class UserCollectionChangeStreamService {
 
     public void start() {
 
-        var resumeToken = resumeTokenRepositoryRepo.findById(ResumeTokenRepository.USER_COLLECTION);
+        var resumeTokenEntry = resumeTokenRepositoryRepo.findById(ResumeTokenRepository.USER_COLLECTION);
 
        var streamBuilder = reactiveMongoTemplate.changeStream(User.class)
                 .watchCollection(ResumeTokenRepository.USER_COLLECTION);
 
         ReactiveChangeStreamOperation.TerminatingChangeStream<User> stream;
 
-        if (resumeToken.isPresent()) {
-            log.info("resume mongo events at token position {}", resumeToken.get().getToken());
-            lastSeenAt.set(resumeToken.get().getTokenTimeStamp());
+        if (resumeTokenEntry.isPresent()) {
+            log.info("resume mongo events at token position {}", resumeTokenEntry.get().getToken());
+            lastSeenAt.set(resumeTokenEntry.get().getTokenTimeStamp());
             var resumeTokenBD = new BsonDocument();
-            resumeTokenBD.put("_data", new BsonString(resumeToken.get().getToken()));
+            resumeTokenBD.put("_data", new BsonString(resumeTokenEntry.get().getToken()));
             stream = streamBuilder.startAfter(resumeTokenBD);
         } else {
             log.info("resume mongo events after timestamp {}", THE_BEGINNING_OF_ALL_PROBLEMS);
@@ -64,13 +64,12 @@ public class UserCollectionChangeStreamService {
 
             BsonDocument newResumeToken = Objects.requireNonNull(event.getRaw()).getResumeToken().asDocument();
             BsonString token = newResumeToken.getString("_data");
+            var timeStampInMs = Objects.requireNonNull(event.getBsonTimestamp()).getTime() * 1000L;
 
-            var date = new Date(Objects.requireNonNull(event.getBsonTimestamp()).getTime() * 1000L);
+            syncToPostgresService.syncInASingleTx(event.getBody(), token.getValue(), timeStampInMs);
 
-            syncToPostgresService.syncInASingleTx(event.getBody(), token.getValue(), date.getTime());
-
-            log.info("change stream event timestamp {}", date);
-            lastSeenAt.set(date.getTime());
+            log.info("change stream event timestamp {}", new Date(timeStampInMs));
+            lastSeenAt.set(timeStampInMs);
         });
     }
 

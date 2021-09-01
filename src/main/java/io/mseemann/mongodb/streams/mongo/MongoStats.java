@@ -28,10 +28,8 @@ public class MongoStats {
 
         Gauge.builder("sync.last.seen.oplog.at", reactiveMongoTemplate, template -> {
                     var result = Optional.ofNullable(template.find(q, OplogEntry.class, "oplog.rs").blockFirst());
-                    return result.map(r -> {
-                        var date = new Date(result.get().ts().getTime() * 1000L);
-                        return date.getTime();
-                    }).orElse(0L);
+                    // timestamp in ms
+                    return result.map(r -> result.get().ts().getTime() * 1000L).orElse(0L);
                 })
                 .strongReference(true)
                 .register(Metrics.globalRegistry);
