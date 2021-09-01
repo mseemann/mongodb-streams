@@ -57,7 +57,7 @@ services:
     command:
       - --config.file=/etc/prometheus/prometheus.yml
     volumes:
-      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus:/etc/prometheus:ro
   grafana:
     image: grafana/grafana:8.1.2
     container_name: grafana

@@ -1,0 +1,21 @@
+groups:
+- name: mongo streams app
+  rules:
+
+  # Alert for any instance that is unreachable for >5 minutes.
+  - alert: InstanceDown
+    expr: up == 0
+    for: 5m
+    labels:
+    annotations:
+      summary: "Instance {{ $labels.instance }} down"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 5 minutes."
+
+  # Alert if the user collection sync legs
+  - alert: UserCollectionSyncLeg
+    expr: (sync_last_seen_oplog_at - sync_last_seen_doc_at)/1000 > 0
+    for: 5m
+    labels:
+    annotations:
+      summary: "User collection is not synced to db"
+      description: "The user collection is not synced for more than 5 minutes. Please check that the Sync-Job is running."
