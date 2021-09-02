@@ -2,7 +2,7 @@
 
 spring:
   application:
-    name:                                               mongo-streams
+    name:                                               mongo-streams-sync
 
   datasource:
     driver-class-name:                                  org.postgresql.Driver

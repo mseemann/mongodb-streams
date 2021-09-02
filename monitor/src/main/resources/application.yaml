@@ -1,0 +1,26 @@
+server:
+  port:                                                 8081
+spring:
+  application:
+    name:                                               mongo-streams-monitor
+  data:
+    mongodb:
+      host:                                             localhost
+      port:                                             27017
+      database:                                         local
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:                                        "*"
+  endpoint:
+    prometheus:
+      enabled:                                          true
+    health:
+      show-details:                                     always
+    shutdown:
+      enabled:                                          true
+  health:
+    livenessState.enabled:                              true
+    readinessState.enabled:                             true

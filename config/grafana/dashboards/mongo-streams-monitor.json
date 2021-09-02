@@ -64,7 +64,7 @@
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "/^sync_last_seen_oplog_at\\{instance=\"host\\.docker.internal:8080\", job=\"mongo\\-streams-app\"\\}$/",
+          "fields": "",
           "values": false
         },
         "text": {},
@@ -74,7 +74,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sync_last_seen_oplog_at{}",
+          "expr": " max_over_time(sync_last_seen_oplog_at[24h] )",
           "format": "time_series",
           "interval": "",
           "legendFormat": "",
@@ -126,7 +126,7 @@
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "/^sync_last_seen_doc_at\\{instance=\"host\\.docker.internal:8080\", job=\"mongo\\-streams-app\"\\}$/",
+          "fields": "",
           "values": false
         },
         "text": {},
@@ -136,7 +136,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sync_last_seen_doc_at{}",
+          "expr": " max_over_time(sync_last_seen_doc_at[24h] )",
           "interval": "",
           "legendFormat": "",
           "queryType": "randomWalk",
@@ -196,7 +196,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "((sync_last_seen_oplog_at{}) - (sync_last_seen_doc_at{}))/1000",
+          "expr": " (max_over_time(sync_last_seen_oplog_at[24h] ) - ignoring(instance, job)  max_over_time(sync_last_seen_doc_at[24h] ) )/ 1000",
           "interval": "",
           "legendFormat": "",
           "queryType": "randomWalk",
@@ -222,5 +222,5 @@
   "timezone": "",
   "title": "Mongo Streams Monitoring",
   "uid": "msm",
-  "version": 1
+  "version": 3
 }
