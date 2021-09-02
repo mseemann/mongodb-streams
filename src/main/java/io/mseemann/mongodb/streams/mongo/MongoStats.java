@@ -11,8 +11,9 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
 import java.util.Optional;
+
+// $changeStream may not be opened on the internal local database
 
 @Component
 @Slf4j
@@ -22,7 +23,7 @@ public class MongoStats {
     MongoClient mongoClient;
 
     public void init() {
-        // db.getCollection('oplog.rs').find({ns:"streams.user"},{ts:1}).sort({"ts":-1}).limit(1)
+        // db.getCollection('oplog.rs').find({ns:"streams.user"}).sort({"ts":-1}).limit(1)
         Query q = new Query().addCriteria(Criteria.where("ns").is("streams.user")).with(Sort.by(Sort.Direction.DESC, "ts"));
         ReactiveMongoTemplate reactiveMongoTemplate = new ReactiveMongoTemplate(mongoClient, "local");
 
@@ -33,5 +34,6 @@ public class MongoStats {
                 })
                 .strongReference(true)
                 .register(Metrics.globalRegistry);
+
     }
 }
