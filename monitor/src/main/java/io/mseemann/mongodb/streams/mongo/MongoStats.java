@@ -1,39 +1,42 @@
 package io.mseemann.mongodb.streams.mongo;
 
-import com.mongodb.reactivestreams.client.MongoClient;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Metrics;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
-import java.util.Optional;
+import java.time.Duration;
+import java.util.concurrent.atomic.AtomicLong;
 
 // $changeStream may not be opened on the internal local database
 
 @Component
 @Slf4j
-@AllArgsConstructor
 public class MongoStats {
 
-    MongoClient mongoClient;
+    final ReactiveMongoTemplate reactiveMongoTemplate;
+
+    private final AtomicLong lastOplogAt = new AtomicLong(0);
+
+    public MongoStats(ReactiveMongoTemplate reactiveMongoTemplate) {
+        this.reactiveMongoTemplate = reactiveMongoTemplate;
+
+
+        Gauge.builder("sync.last.seen.oplog.at", this, mongoStats -> mongoStats.lastOplogAt.get()).strongReference(true).register(Metrics.globalRegistry);
+    }
 
     public void init() {
-        // db.getCollection('oplog.rs').find({ns:"streams.user"}).sort({"ts":-1}).limit(1)
-        Query q = new Query().addCriteria(Criteria.where("ns").is("streams.user")).with(Sort.by(Sort.Direction.DESC, "ts"));
-        ReactiveMongoTemplate reactiveMongoTemplate = new ReactiveMongoTemplate(mongoClient, "local");
-
-        Gauge.builder("sync.last.seen.oplog.at", reactiveMongoTemplate, template -> {
-                    var result = Optional.ofNullable(template.find(q, OplogEntry.class, "oplog.rs").blockFirst());
-                    // timestamp in ms
-                    return result.map(r -> result.get().ts().getTime() * 1000L).orElse(0L);
-                })
-                .strongReference(true)
-                .register(Metrics.globalRegistry);
-
+        Query tailQ = new Query().addCriteria(Criteria.where("ns").is("streams.user"));
+        reactiveMongoTemplate.tail(tailQ, OplogEntry.class, "oplog.rs")
+                .retryWhen(Retry.indefinitely().doAfterRetryAsync(signal -> Mono.delay(Duration.ofSeconds(10)).then()))
+                .subscribe(entry -> {
+                    log.info("tailed entry: {}", entry);
+                    lastOplogAt.set(entry.ts().getTime() * 1000L);
+                });
     }
 }

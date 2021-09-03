@@ -11,7 +11,10 @@ import org.springframework.data.mongodb.core.ReactiveChangeStreamOperation;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.Disposable;
+import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -28,6 +31,7 @@ public class UserCollectionChangeStreamService {
 
     private Disposable subscription;
     private final AtomicLong lastSeenAt = new AtomicLong(0);
+    private final AtomicLong lastProcessedAt = new AtomicLong(0);
 
     private static final Instant THE_BEGINNING_OF_ALL_PROBLEMS = LocalDateTime.parse("2021-08-24T00:00:00").toInstant(ZoneOffset.UTC);
 
@@ -37,13 +41,14 @@ public class UserCollectionChangeStreamService {
         this.resumeTokenRepositoryRepo = resumeTokenRepositoryRepo;
 
         Gauge.builder("sync.last.seen.doc.at", this, listener -> listener.lastSeenAt.get()).strongReference(true).register(Metrics.globalRegistry);
+        Gauge.builder("sync.last.processed.doc.at", this, listener -> listener.lastProcessedAt.get()).strongReference(true).register(Metrics.globalRegistry);
     }
 
     public void start() {
 
         var resumeTokenEntry = resumeTokenRepositoryRepo.findById(ResumeTokenRepository.USER_COLLECTION);
 
-       var streamBuilder = reactiveMongoTemplate.changeStream(User.class)
+        var streamBuilder = reactiveMongoTemplate.changeStream(User.class)
                 .watchCollection(ResumeTokenRepository.USER_COLLECTION);
 
         ReactiveChangeStreamOperation.TerminatingChangeStream<User> stream;
@@ -59,7 +64,9 @@ public class UserCollectionChangeStreamService {
             stream = streamBuilder.resumeAt(THE_BEGINNING_OF_ALL_PROBLEMS);
         }
 
-        subscription = stream.listen().subscribe(event -> {
+        subscription = stream.listen()
+                .retryWhen(Retry.indefinitely().doAfterRetryAsync(signal -> Mono.delay(Duration.ofSeconds(10)).then()))
+                .subscribe(event -> {
             log.info("change stream event {}", event);
 
             BsonDocument newResumeToken = Objects.requireNonNull(event.getRaw()).getResumeToken().asDocument();
@@ -70,6 +77,7 @@ public class UserCollectionChangeStreamService {
 
             log.info("change stream event timestamp {}", new Date(timeStampInMs));
             lastSeenAt.set(timeStampInMs);
+            lastProcessedAt.set(new Date().getTime());
         });
     }
 

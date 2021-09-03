@@ -19,3 +19,14 @@ groups:
     annotations:
       summary: "User collection is not synced to db"
       description: "The user collection is not synced for more than 5 minutes. Please check that the Sync-Job is running."
+
+  # Alert if the user collection sync processing legs
+  - alert: UserCollectionSyncProcessingLeg
+    expr:  (max_over_time(sync_last_processed_doc_at[24h] ) - max_over_time(sync_last_seen_doc_at[24h] ) )/ 1000 > 30
+    for: 5m
+    labels:
+    annotations:
+      summary: "User collection has a delay in processing the oplog to db"
+      description: "The user collection has a delay in processing the oplog entries to the database more than 30 seconds for more than 5 minutes."
+
+
