@@ -39,6 +39,3 @@ management:
       show-details:                                     always
     shutdown:
       enabled:                                          true
-  health:
-    livenessState.enabled:                              true
-    readinessState.enabled:                             true

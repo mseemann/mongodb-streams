@@ -3,6 +3,8 @@ package io.mseemann.mongodb.streams.mongo;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Metrics;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -30,6 +32,7 @@ public class MongoStats {
         Gauge.builder("sync.last.seen.oplog.at", this, mongoStats -> mongoStats.lastOplogAt.get()).strongReference(true).register(Metrics.globalRegistry);
     }
 
+    @EventListener(classes = ContextRefreshedEvent.class)
     public void init() {
         Query tailQ = new Query().addCriteria(Criteria.where("ns").is("streams.user"));
         reactiveMongoTemplate.tail(tailQ, OplogEntry.class, "oplog.rs")

@@ -7,6 +7,9 @@ import io.mseemann.mongodb.streams.db.SyncToPostgresService;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.mongodb.core.ReactiveChangeStreamOperation;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.stereotype.Service;
@@ -44,6 +47,7 @@ public class UserCollectionChangeStreamService {
         Gauge.builder("sync.last.processed.doc.at", this, listener -> listener.lastProcessedAt.get()).strongReference(true).register(Metrics.globalRegistry);
     }
 
+    @EventListener(classes = ContextRefreshedEvent.class)
     public void start() {
 
         var resumeTokenEntry = resumeTokenRepositoryRepo.findById(ResumeTokenRepository.USER_COLLECTION);
@@ -81,6 +85,7 @@ public class UserCollectionChangeStreamService {
         });
     }
 
+    @EventListener(classes = ContextClosedEvent.class)
     public void stop() {
         if (subscription != null) {
             subscription.dispose();
