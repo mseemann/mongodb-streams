@@ -43,8 +43,12 @@ public class UserCollectionChangeStreamService {
         this.syncToPostgresService = syncToPostgresService;
         this.resumeTokenRepositoryRepo = resumeTokenRepositoryRepo;
 
-        Gauge.builder("sync.last.seen.doc.at", this, listener -> listener.lastSeenAt.get()).strongReference(true).register(Metrics.globalRegistry);
-        Gauge.builder("sync.last.processed.doc.at", this, listener -> listener.lastProcessedAt.get()).strongReference(true).register(Metrics.globalRegistry);
+        Gauge.builder("sync.last.seen.doc.at", this, listener -> listener.lastSeenAt.get())
+                .strongReference(true)
+                .register(Metrics.globalRegistry);
+        Gauge.builder("sync.last.processed.doc.at", this, listener -> listener.lastProcessedAt.get())
+                .strongReference(true)
+                .register(Metrics.globalRegistry);
     }
 
     @EventListener(classes = ContextRefreshedEvent.class)
