@@ -7,9 +7,10 @@ services:
     ports:
       - "27017:27017"
     restart: always
-    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+    command: ["-f", "/etc/mongo/mongo.conf"]
     volumes:
       - ./data/mongo/db1:/data/db
+      - ./config/mongo/etc:/etc/mongo
   mongo2:
     hostname: mongo2
     container_name: localmongo2
@@ -17,9 +18,10 @@ services:
     expose:
       - 27017
     restart: always
-    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+    command: ["-f", "/etc/mongo/mongo.conf"]
     volumes:
       - ./data/mongo/db2:/data/db
+      - ./config/mongo/etc:/etc/mongo
   mongo3:
     hostname: mongo3
     container_name: localmongo3
@@ -27,9 +29,10 @@ services:
     expose:
       - 27017
     restart: always
-    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+    command: ["-f", "/etc/mongo/mongo.conf"]
     volumes:
       - ./data/mongo/db3:/data/db
+      - ./config/mongo/etc:/etc/mongo
   mongosetup:
     image: mongo:4
     depends_on:
