@@ -9,7 +9,7 @@ services:
     restart: always
     command: ["-f", "/etc/mongo/mongo.conf"]
     volumes:
-      - ./data/mongo/db1:/data/db
+      - mongo1:/data/db
       - ./config/mongo/etc:/etc/mongo
   mongo2:
     hostname: mongo2
@@ -20,7 +20,7 @@ services:
     restart: always
     command: ["-f", "/etc/mongo/mongo.conf"]
     volumes:
-      - ./data/mongo/db2:/data/db
+      - mongo2:/data/db
       - ./config/mongo/etc:/etc/mongo
   mongo3:
     hostname: mongo3
@@ -31,7 +31,7 @@ services:
     restart: always
     command: ["-f", "/etc/mongo/mongo.conf"]
     volumes:
-      - ./data/mongo/db3:/data/db
+      - mongo3:/data/db
       - ./config/mongo/etc:/etc/mongo
   mongosetup:
     image: mongo:4
@@ -50,7 +50,7 @@ services:
     env_file:
       - ./config/postgres/db.env
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data/
+      - postgres:/var/lib/postgresql/data/
       - ./config/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
   prometheus:
     image: prom/prometheus:v2.29.2
@@ -74,3 +74,9 @@ services:
     volumes:
       - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+volumes:
+  postgres:
+  mongo1:
+  mongo2:
+  mongo3:
